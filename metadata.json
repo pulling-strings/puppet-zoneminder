@@ -1,0 +1,14 @@
+{
+  "name": "strings-zoneminder",
+  "version": "0.1.0",
+  "author": "Ronen Narkis <narkisr@gmail.com>",
+  "summary": "Up to date zoneminder module for Ubuntu > 15.x",
+  "license": "Apache 2.0",
+  "source": "git@github.com:pulling-strings/puppet-zoneminder.git",
+  "project_page": "https://github.com/pulling-strings/puppet-zoneminder",
+  "issues_url": "https://github.com/pulling-strings/puppet-zoneminder/issues",
+  "dependencies": [
+    {"name":"puppetlabs-stdlib","version_requirement":">= 1.0.0"}
+  ]
+}
+
