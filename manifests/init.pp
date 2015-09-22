@@ -1,41 +1,56 @@
-# == Class: zoneminder
-#
-# Full description of class zoneminder here.
-#
-# === Parameters
-#
-# Document parameters here.
-#
-# [*sample_parameter*]
-#   Explanation of what this parameter affects and what it defaults to.
-#   e.g. "Specify one or more upstream ntp servers as an array."
-#
-# === Variables
-#
-# Here you should define a list of variables that this module would require.
-#
-# [*sample_variable*]
-#   Explanation of how this variable affects the funtion of this class and if
-#   it has a default. e.g. "The parameter enc_ntp_servers must be set by the
-#   External Node Classifier as a comma separated list of hostnames." (Note,
-#   global variables should be avoided in favor of class parameters as
-#   of Puppet 2.6.)
-#
-# === Examples
-#
-#  class { 'zoneminder':
-#    servers => [ 'pool.ntp.org', 'ntp.local.company.com' ],
-#  }
-#
-# === Authors
-#
-# Author Name <author@domain.com>
-#
-# === Copyright
-#
-# Copyright 2015 Your name here, unless otherwise noted.
-#
+# Setting up zoneminder based on: # http://bit.ly/1LMc7W8
 class zoneminder {
 
+  include apt
 
+  apt::ppa {'ppa:iconnor/zoneminder':
+    package_manage => true
+  }
+
+  $set_selction = '/usr/bin/debconf-set-selections'
+  $mysql = 'mysql-server-5.6'
+  $set_as = 'password root'
+
+  exec{'set-mysql-password':
+    command => "/bin/echo '${mysql} mysql-server/root_password ${set_as}' | ${set_selction}",
+    user    => 'root',
+    path    => ['/usr/bin','/bin',]
+  } ->
+
+  exec{'set-mysql-password-again':
+    command => "/bin/echo '${mysql} mysql-server/root_password_again ${set_as}'| ${set_selction}",
+    user    => 'root',
+    path    => ['/usr/bin','/bin',]
+  }
+
+  package{'zoneminder':
+    ensure  => present,
+    require => [Apt::Ppa['ppa:iconnor/zoneminder'],
+                Exec['set-mysql-password-again']]
+  }
+
+
+  package{['libvlc-dev', 'libvlccore-dev', 'vlc' ]:
+    ensure  => present
+  }
+
+  file { '/etc/tmpfiles.d/zoneminder.conf':
+    ensure  => file,
+    mode    => '0755',
+    content => 'd /var/run/zm 0755 www-data www-data',
+    owner   => root,
+    group   => root,
+    require => Package['zoneminder']
+  } ->
+
+  service{'zoneminder':
+    ensure    => running,
+    enable    => true,
+    hasstatus => true,
+    provider  => 'systemd'
+  }
+
+  class{'zoneminder::apache':
+    require => Package['zoneminder']
+  }
 }
